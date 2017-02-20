@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Copy to clipboard using javacript</title>
+	<meta charset="utf-8" />
+</head>
+<body>
+    <input type="text" value="copy me to clipboard" readonly/><button>Copy</button>
+
+    <script>
+        document.querySelector('input').addEventListener('focus', function () {
+            this.setSelectionRange(0, this.value.length);
+        });
+
+        document.querySelector('button').addEventListener('click', function () {
+            document.querySelector('input').focus();
+
+            try {
+                var copied = document.execCommand('copy');
+                if (copied) {
+                    this.innerHTML = 'Copied!';
+                }
+
+            } catch (err) {
+                console.log('unable to copy');
+            }
+
+        });
+    </script>
+</body>
+</html>
