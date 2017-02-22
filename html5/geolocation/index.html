@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+</head>
+<body>
+    <button id="getloc">Get Location</button>
+    <div id="output"></div>
+
+    <button id="watchpos">Watch Position</button>
+    <button id="clearwatch">Clear Watch Position</button>
+    <div id="output2"></div>
+    <script>
+        document.getElementById('getloc').addEventListener('click', function () {
+            navigator.geolocation.getCurrentPosition(function (geoposition) {
+                var coords = {
+                    accuracy: geoposition.coords.accuracy,
+                    altitude: geoposition.coords.altitude,
+                    altitudeAccuracy: geoposition.coords.altitudeAccuracy,
+                    heading: geoposition.coords.heading,
+                    latitude: geoposition.coords.latitude,
+                    longitude: geoposition.coords.longtiude,
+                    speed: geoposition.coords.speed
+                };
+
+                document.getElementById('output').innerHTML = JSON.stringify(coords);
+            }, function (error) {
+                console.log(error);
+            });
+        })
+
+        document.getElementById('watchpos').addEventListener('click', function () {
+            var watchId = navigator.geolocation.watchPosition(function (geoposition) {
+                var coords = {
+                    accuracy: geoposition.coords.accuracy,
+                    altitude: geoposition.coords.altitude,
+                    altitudeAccuracy: geoposition.coords.altitudeAccuracy,
+                    heading: geoposition.coords.heading,
+                    latitude: geoposition.coords.latitude,
+                    longitude: geoposition.coords.longtiude,
+                    speed: geoposition.coords.speed
+                };
+
+                document.getElementById('output2').innerHTML = watchId + ':' + JSON.stringify(coords);
+
+                document.getElementById('clearwatch').addEventListener('click', function (e) {
+                    navigator.geolocation.clearWatch(watchId);
+                })
+
+            }, function (error) {
+
+            })
+        });
+    </script>
+</body>
+</html>
