@@ -1,0 +1,153 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+</head>
+<body>
+    <h2>Audio Samples</h2>
+  
+    <script>
+        window.onload = init;
+        var context;
+        var bufferLoader;
+
+        function BufferLoader(context, urlList, callback) {
+            this.context = context;
+            this.urlList = urlList;
+            this.onload = callback;
+            this.bufferList = new Array();
+            this.loadCount = 0;
+        }
+
+        BufferLoader.prototype.loadBuffer = function (url, index) {
+            // Load buffer asynchronously
+            var request = new XMLHttpRequest();
+            request.open("GET", url, true);
+            request.responseType = "arraybuffer";
+
+            var loader = this;
+
+            request.onload = function () {
+                // Asynchronously decode the audio file data in request.response
+                loader.context.decodeAudioData(
+                  request.response,
+                  function (buffer) {
+                      if (!buffer) {
+                          alert('error decoding file data: ' + url);
+                          return;
+                      }
+                      loader.bufferList[index] = buffer;
+                      if (++loader.loadCount == loader.urlList.length)
+                          loader.onload(loader.bufferList);
+                  },
+                  function (error) {
+                      console.error('decodeAudioData error', error);
+                  }
+                );
+            }
+
+            request.onerror = function () {
+                alert('BufferLoader: XHR error');
+            }
+
+            request.send();
+        }
+
+        BufferLoader.prototype.load = function () {
+            for (var i = 0; i < this.urlList.length; ++i)
+                this.loadBuffer(this.urlList[i], i);
+        }
+
+        function init() {
+           try {
+                // Fix up for prefixing
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                context = new AudioContext();
+
+                bufferLoader = new BufferLoader(
+                    context,
+                    [
+                        'http://freesound.org/data/previews/44/44945_236326-lq.mp3',
+                        'http://freesound.org/data/previews/100/100393_377011-lq.mp3',
+                        'http://freesound.org/data/previews/132/132582_2409787-lq.mp3'
+                    ],
+                    finishedLoading
+                )
+
+                bufferLoader.load();
+
+                function finishedLoading(bufferList) {
+                    var hihat = context.createBufferSource();
+                    var snare = context.createBufferSource();
+                    var kick = context.createBufferSource();
+                    hihat.buffer = bufferList[0];
+                    snare.buffer = bufferList[1];
+                    kick.buffer = bufferList[2];
+
+                    // We'll start playing the rhythm 100 milliseconds from "now"
+                    var startTime = context.currentTime + 0.100;
+                    var tempo = 60; // BPM (beats per minute)
+                    var eighthNoteTime = (60 / tempo) / 2;
+
+                    // Play 2 bars of the following:
+                    for (var bar = 0; bar < 2; bar++) {
+                        var time = startTime + bar * 8 * eighthNoteTime;
+                        // Play the bass (kick) drum on beats 1, 5
+                        playSound(kick.buffer, time + 2 * eighthNoteTime);
+                        playSound(kick.buffer, time + 4 * eighthNoteTime);
+
+                        // Play the snare drum on beats 3, 7
+                        playSound(snare.buffer, time + 2 * eighthNoteTime);
+                        playSound(snare.buffer, time + 6 * eighthNoteTime);
+
+                        // Play the hi-hat every eighthh note.
+                        for (var i = 0; i < 8; ++i) {
+                            playSound(hihat.buffer, time + i * eighthNoteTime);
+                        }
+                    }
+                }
+
+                function playSound(buffer, time) {
+                    var source = context.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(context.destination);
+                    source.start(time);
+                }
+            } catch (e) {
+                //alert('Web Audio API is not supported in this browser');
+                console.error(e);
+            }
+        }
+
+        // document.getElementById('loadAudio').addEventListener('click', function () {
+        //     var audioUri = document.getElementById('audioSrc').value;
+        //     loadSound(audioUri);
+        // });
+
+        // function loadSound(url) {
+        //     var request = new XMLHttpRequest();
+        //     request.open('GET', url, true);
+        //     request.responseType = 'arraybuffer';
+
+        //     // Decode asyncchronously
+        //     request.onload = function () {
+        //         context.decodeAudioData(request.response, function (buffer) {
+        //             audioBuffer = buffer;
+        //             playSound(audioBuffer);
+        //         }, function (err) {
+        //             console.log(err);
+        //         });
+        //     }
+        //     request.send();
+        // }
+
+        // function playSound(buffer) {
+        //     var source = context.createBufferSource(); // creates a sound source
+        //     source.buffer = buffer; // tell the source which sound to play
+        //     source.connect(context.destination); // connect the source to the context's destination (the speakers)
+        //     source.start(0); // play the source now
+        // }
+    </script>
+</body>
+</html>
