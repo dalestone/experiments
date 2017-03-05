@@ -8,34 +8,40 @@
     <h1>Azure Document Db Paging</h1>
     <h2>Result</h2>
     <ul id="output"></ul>
-    <h2>Tokens</h2>
-    <ul id="tokensOutput"></ul>
     <button id="previous">Previous</button>
     <button id="next">Next</button>
     <script>
         window.onload = function () {
-            var page = 0;
-            var tokens = [];
+            var pageIndex = 0;
+            var tokens = [
+                "",
+                //"cB1mAK0E-gBvAAAAAAAAAA==",
+                //"cB1mAK0E-gB5AAAAAAAAAA==",
+                //"cB1mAK0E-gCDAAAAAAAAAA=="
+            ];
 
-            function getItems(token, page) {
+            function getItems(token, pageIndex, removeLastToken) {
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", "api/items?token=" + token);
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState == XMLHttpRequest.DONE) {
                         var ul = document.getElementById('output');
-                        var tokensOutput = document.getElementById('tokensOutput');
                         var data = JSON.parse(xhr.responseText);
                         var requestContinuation = JSON.parse(data.requestContinuation);
                         ul.innerHTML = '';
                         
-                        var token_li = document.createElement('li');
-                        token_li.innerHTML = requestContinuation.token;
-                        tokensOutput.appendChild(token_li);
-
-                        //if (page == 0) {
-                            tokens.push(requestContinuation);
-                        //}
+                        // push the next request token in array
+                        if (requestContinuation != null) {
+                            if (removeLastToken) {
+                                if (tokens.length > 2) {
+                                    tokens.pop();
+                                }                                
+                            } else {
+                                tokens.push(requestContinuation.token);
+                            }                                                                             
+                        }
                         
+                        // append the page data
                         var items = data.result;
                         var li;
 
@@ -44,6 +50,8 @@
                             li.innerHTML = items[i].name;
                             ul.appendChild(li);
                         }
+
+                        console.log(tokens)
                     }
                 }
                 xhr.send();
@@ -51,16 +59,26 @@
 
             getItems("");
 
-            document.getElementById('previous').addEventListener('click', function () {
-                var token = tokens[page - 1].token;
-                getItems(token);
-                page--;
+            document.getElementById('previous').addEventListener('click', function () {                
+                pageIndex -= 1;
+                var token = tokens[pageIndex];
+
+                if (typeof token !== 'undefined') {
+                    getItems(token, pageIndex, true);
+                } else {
+                    pageIndex += 1;
+                }
             });
 
             document.getElementById('next').addEventListener('click', function () {
-                var token = tokens[page].token;
-                getItems(token);
-                page++;
+                pageIndex += 1;
+                var token = tokens[pageIndex];
+
+                if (typeof token !== 'undefined') {
+                    getItems(token, pageIndex);
+                } else {
+                    pageIndex -= 1;
+                }
             });
         }
 

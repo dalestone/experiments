@@ -28,6 +28,7 @@ namespace AzureDocumentDbPaging.Controllers
         {
             try
             {
+                int maxItemCount = 10;
                 string rc = null;
                 if (!string.IsNullOrEmpty(token))
                 {
@@ -35,13 +36,13 @@ namespace AzureDocumentDbPaging.Controllers
                 }
 
                 var collection = UriFactory.CreateDocumentCollectionUri(DatabaseId, CollectionId);
-                IDocumentQuery<Item> query = client.CreateDocumentQuery<Item>(collection, new FeedOptions { MaxItemCount = 5, RequestContinuation = rc }).AsDocumentQuery();
+                IDocumentQuery<Item> query = client.CreateDocumentQuery<Item>(collection,new FeedOptions { MaxItemCount = maxItemCount, RequestContinuation = rc }).AsDocumentQuery();
 
                 var result = await query.ExecuteNextAsync<Item>();
                 var itemResult = new ItemResult();
                 itemResult.Result = result;
                 itemResult.HasMoreResults = query.HasMoreResults;
-                itemResult.MaxItemCount = 5;
+                itemResult.MaxItemCount = maxItemCount;
 
                 if (query.HasMoreResults)
                 {
